@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logs — Application Observability</title>
+  
+  <!-- Professional Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- Dashboard CSS -->
+  <link rel="stylesheet" href="/css/logs.css">
+</head>
+<body class="dark-theme">
+
+  <!-- Main Layout Wrapper -->
+  <div class="app-layout">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <h1 class="header-title">Logs</h1>
+        <p class="header-subtitle">Monitor and inspect application activity</p>
+      </div>
+      
+      <div class="header-right">
+        <div class="live-status">
+          <span class="live-dot"></span>
+          <span class="live-text">Live</span>
+        </div>
+        <span class="last-updated-text" id="last-updated">Last updated: Just now</span>
+        <button id="btn-refresh" class="btn-icon-text">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+    </header>
+
+    <main class="dashboard-content">
+
+      <!-- Horizontal Metrics Bar -->
+      <section class="metrics-bar" id="metrics-section">
+        <div class="metric-item">
+          <div class="metric-value" id="metric-total-requests">
+            <div class="skeleton skeleton-text short"></div>
+          </div>
+          <div class="metric-label">Total Requests</div>
+        </div>
+        
+        <div class="metric-divider"></div>
+        
+        <div class="metric-item">
+          <div class="metric-value" id="metric-active-requests">
+            <div class="skeleton skeleton-text short"></div>
+          </div>
+          <div class="metric-label">Active Now</div>
+        </div>
+        
+        <div class="metric-divider"></div>
+        
+        <div class="metric-item">
+          <div class="metric-value" id="metric-avg-response">
+            <div class="skeleton skeleton-text short"></div>
+          </div>
+          <div class="metric-label">Avg Response Time</div>
+        </div>
+        
+        <div class="metric-divider"></div>
+        
+        <div class="metric-item">
+          <div class="metric-value" id="metric-error-rate">
+            <div class="skeleton skeleton-text short"></div>
+          </div>
+          <div class="metric-label">Error Rate</div>
+        </div>
+      </section>
+
+      <!-- Main Graph: Request Activity -->
+      <section class="panel chart-panel">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Request Activity</h2>
+            <p class="panel-subtitle">Incoming requests over time</p>
+          </div>
+          <div class="time-filter-tabs">
+            <button class="time-tab active" data-range="5m">5m</button>
+            <button class="time-tab" data-range="15m">15m</button>
+            <button class="time-tab" data-range="1h">1h</button>
+            <button class="time-tab" data-range="24h">24h</button>
+          </div>
+        </div>
+        <div class="main-chart-wrapper">
+          <canvas id="chart-request-activity"></canvas>
+        </div>
+      </section>
+
+      <!-- Compact System Monitoring Grid -->
+      <section class="system-grid">
+        <!-- Compact Network Panel -->
+        <div class="panel compact-panel">
+          <div class="compact-panel-header">
+            <h3 class="compact-panel-title">Network</h3>
+            <span class="compact-panel-badge" id="net-rps">0 req/s</span>
+          </div>
+          <div class="compact-metrics-row">
+            <div class="compact-metric">
+              <span class="compact-metric-label">↑ Incoming Data</span>
+              <span class="compact-metric-val" id="net-incoming">0 KB</span>
+            </div>
+            <div class="compact-metric">
+              <span class="compact-metric-label">↓ Outgoing Data</span>
+              <span class="compact-metric-val" id="net-outgoing">0 KB</span>
+            </div>
+          </div>
+          <div class="sparkline-wrapper">
+            <canvas id="chart-sparkline-network"></canvas>
+          </div>
+        </div>
+
+        <!-- Compact Memory Panel -->
+        <div class="panel compact-panel">
+          <div class="compact-panel-header">
+            <h3 class="compact-panel-title">Memory</h3>
+            <span class="compact-panel-badge" id="mem-heap-used">0 MB</span>
+          </div>
+          <div class="compact-metrics-row">
+            <div class="compact-metric">
+              <span class="compact-metric-label">Heap Used</span>
+              <span class="compact-metric-val" id="mem-heap-val">0 MB</span>
+            </div>
+            <div class="compact-metric">
+              <span class="compact-metric-label">RSS</span>
+              <span class="compact-metric-val" id="mem-rss-val">0 MB</span>
+            </div>
+            <div class="compact-metric">
+              <span class="compact-metric-label">External</span>
+              <span class="compact-metric-val" id="mem-ext-val">0 MB</span>
+            </div>
+          </div>
+          <div class="sparkline-wrapper">
+            <canvas id="chart-sparkline-memory"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Logs Section -->
+      <section class="panel logs-section">
+        <div class="logs-header">
+          <h2 class="panel-title">All Logs</h2>
+        </div>
+
+        <!-- Search & Filter Controls Bar -->
+        <div class="filter-bar">
+          <div class="search-input-wrapper">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="search-icon">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="input-search" placeholder="Search by route or request ID..." autocomplete="off">
+          </div>
+
+          <div class="filter-controls">
+            <select id="filter-method" class="filter-select">
+              <option value="">All Methods</option>
+              <option value="GET">GET</option>
+              <option value="POST">POST</option>
+              <option value="PUT">PUT</option>
+              <option value="DELETE">DELETE</option>
+              <option value="PATCH">PATCH</option>
+            </select>
+
+            <select id="filter-level" class="filter-select">
+              <option value="">All Levels</option>
+              <option value="INFO">INFO</option>
+              <option value="WARN">WARN</option>
+              <option value="ERROR">ERROR</option>
+            </select>
+
+            <select id="filter-status" class="filter-select">
+              <option value="">All Status</option>
+              <option value="2xx">2xx Success</option>
+              <option value="3xx">3xx Redirect</option>
+              <option value="4xx">4xx Warning</option>
+              <option value="5xx">5xx Error</option>
+            </select>
+
+            <button id="btn-clear-filters" class="btn-text">Clear filters</button>
+          </div>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="table-container">
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th style="width: 100px;">TIME</th>
+                <th style="width: 90px;">METHOD</th>
+                <th>ROUTE</th>
+                <th style="width: 90px;">STATUS</th>
+                <th style="width: 100px;">DURATION</th>
+                <th style="width: 100px;">SIZE</th>
+                <th style="width: 90px;">LEVEL</th>
+              </tr>
+            </thead>
+            <tbody id="logs-table-body">
+              <!-- Initial Skeleton Rows -->
+              <tr class="skeleton-row">
+                <td><div class="skeleton skeleton-text"></div></td>
+                <td><div class="skeleton skeleton-badge"></div></td>
+                <td><div class="skeleton skeleton-text long"></div></td>
+                <td><div class="skeleton skeleton-badge"></div></td>
+                <td><div class="skeleton skeleton-text"></div></td>
+                <td><div class="skeleton skeleton-text"></div></td>
+                <td><div class="skeleton skeleton-badge"></div></td>
+              </tr>
+              <tr class="skeleton-row">
+                <td><div class="skeleton skeleton-text"></div></td>
+                <td><div class="skeleton skeleton-badge"></div></td>
+                <td><div class="skeleton skeleton-text long"></div></td>
+                <td><div class="skeleton skeleton-badge"></div></td>
+                <td><div class="skeleton skeleton-text"></div></td>
+                <td><div class="skeleton skeleton-text"></div></td>
+                <td><div class="skeleton skeleton-badge"></div></td>
+              </tr>
+              <tr class="skeleton-row">
+                <td><div class="skeleton skeleton-text"></div></td>
+                <td><div class="skeleton skeleton-badge"></div></td>
+                <td><div class="skeleton skeleton-text long"></div></td>
+                <td><div class="skeleton skeleton-badge"></div></td>
+                <td><div class="skeleton skeleton-text"></div></td>
+                <td><div class="skeleton skeleton-text"></div></td>
+                <td><div class="skeleton skeleton-badge"></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table Footer Pagination -->
+        <div class="table-footer">
+          <span class="pagination-info" id="pagination-info">Showing 0 of 0 logs</span>
+          <div class="pagination-buttons">
+            <button id="btn-prev-page" class="btn-pagination" disabled>&larr; Previous</button>
+            <span id="page-display" class="page-num">Page 1</span>
+            <button id="btn-next-page" class="btn-pagination" disabled>Next &rarr;</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- Right-Side Sliding Inspector Drawer -->
+  <div id="drawer-backdrop" class="drawer-backdrop"></div>
+  
+  <aside id="log-drawer" class="log-drawer" aria-hidden="true">
+    <div class="drawer-header">
+      <h2 class="drawer-title">Request Details</h2>
+      <button id="btn-close-drawer" class="drawer-close-btn" aria-label="Close details">&times;</button>
+    </div>
+
+    <div class="drawer-content" id="drawer-body-content">
+      <!-- Dynamically filled on row click -->
+    </div>
+  </aside>
+
+  <!-- Frontend Logic -->
+  <script src="/js/logs.js"></script>
+</body>
+</html>
