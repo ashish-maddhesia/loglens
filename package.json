@@ -1,12 +1,45 @@
 {
-  "name": "express-logging-dashboard",
+  "name": "@ashish-maddhesia/loglens",
   "version": "1.0.0",
-  "description": "Complete Express.js Request Logging System and Real-time Dashboard",
+  "description": "A complete Express.js request logging and observability dashboard",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
+  "keywords": [
+    "express",
+    "logger",
+    "logging",
+    "middleware",
+    "dashboard",
+    "monitoring",
+    "observability",
+    "nodejs"
+  ],
+  "author": "Ashish Kumar Maddhesiya",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ashish-maddhesia/loglens.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ashish-maddhesia/loglens/issues"
+  },
+  "homepage": "https://github.com/ashish-maddhesia/loglens#readme",
+  "files": [
+    "index.js",
+    "middleware",
+    "routes",
+    "services",
+    "views",
+    "public",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "express": "^5.2.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
